@@ -8,6 +8,7 @@ import javax.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,6 +41,7 @@ public class EmpresaControle {
 	@Autowired
 	private AdicionadorLinkEmpresa adicionadorLink;
 	
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	@GetMapping("/empresa/{empresaId}")
 	public ResponseEntity<Empresa> obterEmpresa(@PathVariable Long empresaId) {
 	    try {
@@ -54,6 +56,7 @@ public class EmpresaControle {
 	    }
 	}
 	
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	@GetMapping("empresas")
 	public ResponseEntity<List<Empresa>> obterEmpresas() {
 		List<Empresa> empresas = empresaRepositorio.findAll();
@@ -67,6 +70,7 @@ public class EmpresaControle {
 		}
 	}
 	
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	@PostMapping("empresa/cadastro")
 	public ResponseEntity<?> cadastrarEmpresa(@RequestBody Empresa empresa) {
 		HttpStatus status = HttpStatus.CONFLICT;
@@ -78,7 +82,8 @@ public class EmpresaControle {
 
 	}
 	
-	 @PostMapping("/adicionarUsuario/{empresaId}/{usuarioId}")
+	@PreAuthorize("hasAnyRole('ADMIN')")
+	@PostMapping("/adicionarUsuario/{empresaId}/{usuarioId}")
 	    public ResponseEntity<?> adicionarUsuarioEmpresa(@PathVariable Long empresaId, @PathVariable Long usuarioId) {
 	        try {
 	            Empresa empresa = empresaRepositorio.findById(empresaId)
@@ -97,6 +102,7 @@ public class EmpresaControle {
 	        }
 	    }
 	
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	@PutMapping("/atualizar/{empresaId}")
     public ResponseEntity<?> atualizarEmpresa(@PathVariable Long empresaId, @RequestBody Empresa novaEmpresa) {
 		try {
@@ -115,6 +121,7 @@ public class EmpresaControle {
 	    }
     }
 	
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	@DeleteMapping("/excluir/{empresaId}")
 	public ResponseEntity<?> excluirEmpresa(@PathVariable Long empresaId) {
 	    HttpStatus status = HttpStatus.BAD_REQUEST;

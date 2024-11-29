@@ -8,6 +8,7 @@ import javax.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,10 +18,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.autobots.automanager.entidades.CredencialUsuarioSenha;
+import com.autobots.automanager.entidades.Credencial;
 import com.autobots.automanager.entidades.Usuario;
 import com.autobots.automanager.modelos.atualizadores.CredencialAtualizador;
-import com.autobots.automanager.modelos.links.AdicionadorLinkCredencial;
 import com.autobots.automanager.repositorios.CredencialRepositorio;
 import com.autobots.automanager.repositorios.UsuarioRepositorio;
 
@@ -31,11 +31,10 @@ public class CredencialControle {
 	private UsuarioRepositorio repositorioUsuario;
 	@Autowired
 	private CredencialRepositorio repositorioCredencial;
-	@Autowired
-	private AdicionadorLinkCredencial adicionadorLink;
-	
+
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	@PostMapping("/adicionar/{usuarioId}")
-	public ResponseEntity<?> adicionarCredencial(@PathVariable Long usuarioId, @RequestBody CredencialUsuarioSenha credencial) {
+	public ResponseEntity<?> adicionarCredencial(@PathVariable Long usuarioId, @RequestBody Credencial credencial) {
 		try {
 			Usuario usuario = repositorioUsuario.findById(usuarioId).orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
 			usuario.getCredenciais().add(credencial);
@@ -46,32 +45,33 @@ public class CredencialControle {
 		}
 	}
 	
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	@GetMapping("/credencial/{credencialId}")
-	public ResponseEntity<CredencialUsuarioSenha> obterCredencial(@PathVariable Long credencialId) {
+	public ResponseEntity<Credencial> obterCredencial(@PathVariable Long credencialId) {
 		try {
-			CredencialUsuarioSenha credencial = repositorioCredencial.findById(credencialId).orElseThrow(() -> new EntityNotFoundException("Credencial não encontrada"));
-			adicionadorLink.adicionarLink(credencial);
+			Credencial credencial = repositorioCredencial.findById(credencialId).orElseThrow(() -> new EntityNotFoundException("Credencial não encontrada"));
 			return new ResponseEntity<>(credencial, HttpStatus.FOUND);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
 	
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	@GetMapping("credenciais")
-	public ResponseEntity<List<CredencialUsuarioSenha>> obterCredenciais() {
-		List<CredencialUsuarioSenha> credenciais = repositorioCredencial.findAll();
+	public ResponseEntity<List<Credencial>> obterCredenciais() {
+		List<Credencial> credenciais = repositorioCredencial.findAll();
 		if (credenciais.isEmpty()) {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		} else {
-			adicionadorLink.adicionarLink(credenciais);
 			return new ResponseEntity<>(credenciais, HttpStatus.FOUND);
 		}
 	}
 	
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	@PutMapping("/atualizar/{credencialId}")
-	public ResponseEntity<?> atualizarCredencial(@PathVariable Long credencialId, @RequestBody CredencialUsuarioSenha novaCredencial) {
+	public ResponseEntity<?> atualizarCredencial(@PathVariable Long credencialId, @RequestBody Credencial novaCredencial) {
 		try {
-			CredencialUsuarioSenha credencial = repositorioCredencial.findById(credencialId).orElseThrow(() -> new EntityNotFoundException("Credencial não encontrada"));
+			Credencial credencial = repositorioCredencial.findById(credencialId).orElseThrow(() -> new EntityNotFoundException("Credencial não encontrada"));
 			CredencialAtualizador atualizador = new CredencialAtualizador();
 			atualizador.atualizar(credencial, novaCredencial);
 			repositorioCredencial.save(credencial);
@@ -81,11 +81,12 @@ public class CredencialControle {
 		}
 	}
 	
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	@DeleteMapping("/excluir/{usuarioId}/{credencialId}")
 	public ResponseEntity<?> deletarCredencial(@PathVariable Long usuarioId, @PathVariable Long credencialId) {
 		try {
 			Usuario usuario = repositorioUsuario.findById(usuarioId).orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
-			Set<CredencialUsuarioSenha> credenciais = usuario.getCredenciais();
+			Set<Credencial> credenciais = usuario.getCredenciais();
 			credenciais.removeIf(credencial -> credencial.getId().equals(credencialId));
 			repositorioUsuario.save(usuario);
 			return new ResponseEntity<>(HttpStatus.OK);
